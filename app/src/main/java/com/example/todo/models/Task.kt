@@ -10,7 +10,6 @@ data class Task(
     var type: String,
     var date:Long?,
     var time:Long,
-    var isFinished : Int = 0,
     @PrimaryKey(autoGenerate = true)
     var id:Long = 0
 )

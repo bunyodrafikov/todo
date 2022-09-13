@@ -5,19 +5,18 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todo.R
+import com.example.todo.data.room.TodoDatabase
 import com.example.todo.models.Task
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.components.ActivityComponent
 import kotlinx.android.synthetic.main.item_todo.view.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
-class TodoAdapter(
-    private val list: List<Task>,
-    var listener: TodoListener
-) :
-    RecyclerView.Adapter<TodoAdapter.TodoViewHolder>() {
+class TodoAdapter(private val list: List<Task>, val db: TodoDatabase) : RecyclerView.Adapter<TodoAdapter.TodoViewHolder>() {
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TodoViewHolder {
@@ -32,9 +31,7 @@ class TodoAdapter(
     override fun onBindViewHolder(holder: TodoViewHolder, position: Int) {
         holder.bind(list[position])
         holder.itemView.deleteButton.setOnClickListener {
-            GlobalScope.launch(Dispatchers.IO) {
-                listener.onDeleteClicked(list[position].id)
-            }
+            db.todoDao().deleteTask(list[position].id)
         }
     }
 
@@ -65,15 +62,11 @@ class TodoAdapter(
         private fun updateDate(time: Long?) {
             val myformat = "EEE, d MMM yyyy"
             val sdf = SimpleDateFormat(myformat)
-            itemView.txtShowDate.text = if (time!=null) sdf.format(Date(time)) else ""
+            itemView.txtShowDate.text = if (time != null) sdf.format(Date(time)) else ""
         }
     }
 
 
-}
-
-interface TodoListener {
-    fun onDeleteClicked(id: Long)
 }
 
 

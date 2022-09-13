@@ -14,7 +14,6 @@ import com.example.todo.util.Utils.titleExtra
 
 
 class NotificationReceiver : BroadcastReceiver() {
-
     override fun onReceive(context: Context, intent: Intent) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 

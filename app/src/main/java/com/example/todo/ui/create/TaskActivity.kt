@@ -1,6 +1,9 @@
 package com.example.todo.ui.create
 
-import android.app.*
+import android.app.AlarmManager
+import android.app.DatePickerDialog
+import android.app.PendingIntent
+import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -8,21 +11,21 @@ import android.view.View
 import android.widget.DatePicker
 import android.widget.RadioButton
 import android.widget.TimePicker
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.example.todo.R
 import com.example.todo.data.room.TodoDatabase
 import com.example.todo.models.Task
 import com.example.todo.service.NotificationReceiver
 import com.example.todo.util.Utils
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_task.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.text.DateFormat.getDateInstance
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class TaskActivity : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var myCalendar: Calendar
@@ -35,9 +38,10 @@ class TaskActivity : AppCompatActivity(), View.OnClickListener {
     private var finalDate = 0L
     private var finalTime = 0L
 
-    private val db by lazy {
-        TodoDatabase.getDatabase(this)
-    }
+    private val viewModel: TaskViewModel by viewModels()
+
+    @Inject
+    lateinit var db: TodoDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,25 +71,14 @@ class TaskActivity : AppCompatActivity(), View.OnClickListener {
         val type = findViewById<RadioButton>(typeRadio.checkedRadioButtonId).text.toString()
         val title = titleInpLay.editText?.text.toString()
         val description = taskInpLay.editText?.text.toString()
+
         val frequency = AlarmManager.INTERVAL_DAY
         if (type == "Weekly") AlarmManager.INTERVAL_DAY.times(7)
 
-        if (finalDate<finalTime) finalDate = finalTime
+        if (finalDate < finalTime) finalDate = finalTime
 
         scheduleNotification(title, description, frequency, applicationContext)
-        GlobalScope.launch(Dispatchers.Main) {
-            val id = withContext(Dispatchers.IO) {
-                return@withContext db.todoDao().insertTask(
-                    Task(
-                        title,
-                        description,
-                        type,
-                        finalDate,
-                        finalTime
-                    )
-                )
-            }
-        }
+        viewModel.saveTask(Task(title, description, type, finalDate, finalTime))
         finish()
     }
 
@@ -110,7 +103,7 @@ class TaskActivity : AppCompatActivity(), View.OnClickListener {
     private fun updateTime() {
         //Mon, 5 Jan 2020
         val myformat = "h:mm a"
-        val sdf = SimpleDateFormat(myformat)
+        val sdf = getDateInstance()
         calendar.time = myCalendar.time
         finalTime = myCalendar.time.time
         timeEdt.setText(sdf.format(myCalendar.time))
@@ -127,6 +120,7 @@ class TaskActivity : AppCompatActivity(), View.OnClickListener {
                 myCalendar.timeZone = TimeZone.getTimeZone("CET")
                 updateDate()
             }
+
         val datePickerDialog = DatePickerDialog(
             this, dateSetListener, myCalendar.get(Calendar.YEAR),
             myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH)
@@ -143,6 +137,7 @@ class TaskActivity : AppCompatActivity(), View.OnClickListener {
         dateEdt.setText(sdf.format(myCalendar.time))
         timeInptLay.visibility = View.VISIBLE
     }
+
     private fun scheduleNotification(
         title: String,
         description: String,

@@ -11,7 +11,7 @@ interface TodoDao {
     @Insert()
     fun insertTask(todoModel: Task): Long
 
-    @Query("Select * from Task where isFinished == 0")
+    @Query("Select * from Task")
     fun getTask(): LiveData<List<Task>>
 
     @Query("Delete from Task where id=:uid")

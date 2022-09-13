@@ -1,35 +1,33 @@
 package com.example.todo.di
 
-import android.app.Application
 import android.content.Context
-import android.widget.Toast
 import androidx.room.Room
+import com.example.todo.data.room.TodoDao
 import com.example.todo.data.room.TodoDatabase
-import com.example.todo.util.Utils.DB_NAME
+import com.example.todo.util.Utils
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+
 @Module
 @InstallIn(SingletonComponent::class)
-object AppModule {
+class RoomModule {
     @Provides
     @Singleton
-    fun provideTodoDatabase(app: Application): TodoDatabase {
+    fun provideTodoDatabase(@ApplicationContext context: Context): TodoDatabase {
         return Room.databaseBuilder(
-            app,
+            context,
             TodoDatabase::class.java,
-            DB_NAME
-        ).build()
+            Utils.DB_NAME
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
-    @Singleton
-    fun provideTaskDao(db: TodoDatabase) = db.todoDao()
-
-    fun notifyUser(context: Context, msg: String) {
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-    }
+    fun provideTodoDao(db: TodoDatabase): TodoDao = db.todoDao()
 }

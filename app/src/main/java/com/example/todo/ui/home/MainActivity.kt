@@ -12,20 +12,16 @@ import com.example.todo.models.Task
 import com.example.todo.ui.create.TaskActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), TodoListener {
+class MainActivity : AppCompatActivity() {
+    @Inject
+    lateinit var db: TodoDatabase
 
     private val list = arrayListOf<Task>()
-    private var adapter = TodoAdapter(list, this)
-
-    private val db by lazy {
-        TodoDatabase.getDatabase(this)
-    }
+    private var adapter = TodoAdapter(list, db)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +33,7 @@ class MainActivity : AppCompatActivity(), TodoListener {
             adapter = this@MainActivity.adapter
         }
 
-        db.todoDao().getTask().observe(this, Observer {
+        db.todoDao().getTask().observe(this) {
             if (!it.isNullOrEmpty()) {
                 list.clear()
                 list.addAll(it)
@@ -46,16 +42,10 @@ class MainActivity : AppCompatActivity(), TodoListener {
                 list.clear()
                 adapter.notifyDataSetChanged()
             }
-        })
+        }
     }
 
     fun openNewTask(view: View) {
         startActivity(Intent(this, TaskActivity::class.java))
-    }
-
-    override fun onDeleteClicked(id: Long) {
-        GlobalScope.launch(Dispatchers.IO) {
-            db.todoDao().deleteTask(id)
-        }
     }
 }
