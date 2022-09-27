@@ -16,7 +16,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
-class TodoAdapter(private val list: List<Task>, val db: TodoDatabase) : RecyclerView.Adapter<TodoAdapter.TodoViewHolder>() {
+class TodoAdapter(private val list: List<Task>, val manageDb: ManageDb) : RecyclerView.Adapter<TodoAdapter.TodoViewHolder>() {
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TodoViewHolder {
@@ -31,7 +31,8 @@ class TodoAdapter(private val list: List<Task>, val db: TodoDatabase) : Recycler
     override fun onBindViewHolder(holder: TodoViewHolder, position: Int) {
         holder.bind(list[position])
         holder.itemView.deleteButton.setOnClickListener {
-            db.todoDao().deleteTask(list[position].id)
+            manageDb.deleteTask(position)
+
         }
     }
 
@@ -65,8 +66,9 @@ class TodoAdapter(private val list: List<Task>, val db: TodoDatabase) : Recycler
             itemView.txtShowDate.text = if (time != null) sdf.format(Date(time)) else ""
         }
     }
-
-
+}
+interface ManageDb{
+    fun deleteTask(position: Int)
 }
 
 
